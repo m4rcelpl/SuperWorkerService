@@ -1,0 +1,10 @@
+﻿{
+  "profiles": {
+    "SuperWorkerService": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
