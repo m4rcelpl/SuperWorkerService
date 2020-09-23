@@ -13,6 +13,15 @@ namespace SuperWorkerService
 
         public static void Main(string[] args)
         {
+            //DOTNET_RUNNING_IN_CONTAINER is a standard environment variables set to true in all docker .NET images
+            runningInContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") switch
+            {
+                "True" => true,
+                "TRUE" => true,
+                "true" => true,
+                _ => false
+            };
+
             do
             {
                 CreateHostBuilder(args).Build().Run();
@@ -35,16 +44,8 @@ namespace SuperWorkerService
             })
             .ConfigureServices((hostContext, services) =>
             {
-                //DOTNET_RUNNING_IN_CONTAINER is a standard environment variables set to true in all docker .NET images
-                runningInContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") switch
-                {
-                    "True" => true,
-                    "TRUE" => true,
-                    "true" => true,
-                    _ => false
-                };
-
-                services.AddTransient<ExtendedMethods>();
+                services.AddSingleton<ExtendedMethods>();
+                services.AddTransient<Tasks>();
                 services.AddHostedService<Worker>();
 
                 //

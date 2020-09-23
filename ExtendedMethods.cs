@@ -16,7 +16,7 @@ namespace SuperWorkerService
         public ExtendedMethods(ILogger<ExtendedMethods> logger, IConfiguration configuration)
         {
             log = logger;
-            this.config = configuration;
+            config = configuration;
         }
 
         public async Task ItIsTimeAsync()
@@ -25,6 +25,7 @@ namespace SuperWorkerService
 
             if (sec != 0)
             {
+                log.LogInformation($"Next launch at {sec} sec");
                 await Task.Delay(TimeSpan.FromSeconds(sec)).ConfigureAwait(false);
                 return;
             }

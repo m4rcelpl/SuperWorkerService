@@ -14,13 +14,15 @@ namespace SuperWorkerService
         private readonly IHostApplicationLifetime appLifetime;
         private readonly IConfiguration config;
         private readonly ExtendedMethods exMethods;
+        private readonly Tasks tasks;
 
-        public Worker(ILogger<Worker> logger, IHostApplicationLifetime applicationLifetime, IConfiguration configuration, ExtendedMethods extendedMethods)
+        public Worker(ILogger<Worker> logger, IHostApplicationLifetime applicationLifetime, IConfiguration configuration, ExtendedMethods extendedMethods, Tasks tasks)
         {
             log = logger;
-            this.appLifetime = applicationLifetime;
-            this.config = configuration;
-            this.exMethods = extendedMethods;
+            appLifetime = applicationLifetime;
+            config = configuration;
+            exMethods = extendedMethods;
+            this.tasks = tasks;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -32,18 +34,18 @@ namespace SuperWorkerService
                 while (!stoppingToken.IsCancellationRequested)
                 {
                     await exMethods.ItIsTimeAsync().ConfigureAwait(false);
+                    log.LogInformation("[{time}] Worker starts", DateTimeOffset.Now);
                     runtime.Restart();
 
-                    //Here you can add you code
-                    await Task.Delay(1000);
+                    await tasks.Task1();
 
                     runtime.Stop();
-                    log.LogInformation("Worker running at: {time} time of execution (s): {runetime}", DateTimeOffset.Now, runtime.Elapsed.TotalSeconds);
+                    log.LogInformation("[{time}] Worker completed, time of execution (s): {runetime}", DateTimeOffset.Now, runtime.Elapsed.TotalSeconds);
                 }
             }
             catch (Exception ex)
             {
-                log.LogCritical(ex, "Error in main worker at {timr}", DateTimeOffset.Now);
+                log.LogCritical(ex, "[{time}] Error in main worker.", DateTimeOffset.Now);
             }
             finally
             {
