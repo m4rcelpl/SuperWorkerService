@@ -2,6 +2,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -53,19 +55,30 @@ namespace SuperWorkerService
                 return true;
             }
 
-            DateTime.TryParse(config["Schedule:RunAtTime"], out DateTime dateTime);
 
-            if (dateTime.Ticks != 0)
+            var runAtTime = config.GetSection("Schedule:RunAtTime").Get<string[]>() ?? new string[0];
+
+            List<DateTime> listRunAtTime = new List<DateTime>();
+
+            foreach (var time in runAtTime)
             {
-                TimeSpan elapsedSpan = new TimeSpan(dateTime.Ticks - DateTime.Now.Ticks);
-
-                if (elapsedSpan.Seconds <= 0)
-                    elapsedSpan = elapsedSpan.Add(TimeSpan.FromDays(1));
-
-                log.LogDebug($"Next worker launch in {elapsedSpan.Hours}:{elapsedSpan.Minutes}:{elapsedSpan.Seconds}");
-
-                await Task.Delay(TimeSpan.FromSeconds(elapsedSpan.TotalSeconds)).ConfigureAwait(false);
+                DateTime.TryParse(time, out DateTime dateTime);
+                listRunAtTime.Add(dateTime);
             }
+
+            var sortedListRunAtTime = listRunAtTime.OrderBy(e => e.Ticks).ToList<DateTime>();
+
+            //if (dateTime.Ticks != 0)
+            //{
+            //    TimeSpan elapsedSpan = new TimeSpan(dateTime.Ticks - DateTime.Now.Ticks);
+
+            //    if (elapsedSpan.Seconds <= 0)
+            //        elapsedSpan = elapsedSpan.Add(TimeSpan.FromDays(1));
+
+            //    log.LogDebug($"Next worker launch in {elapsedSpan.Hours}:{elapsedSpan.Minutes}:{elapsedSpan.Seconds}");
+
+            //    await Task.Delay(TimeSpan.FromSeconds(elapsedSpan.TotalSeconds)).ConfigureAwait(false);
+            //}
 
             return true;
         }
