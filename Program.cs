@@ -2,7 +2,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Configuration;
 using System;
 
 namespace SuperWorkerService
@@ -45,6 +44,9 @@ namespace SuperWorkerService
                     _ => false
                 };
 
+                services.AddTransient<ExtendedMethods>();
+                services.AddHostedService<Worker>();
+
                 //
                 //If you need HttpClient, uncomment this
                 //requirement - Microsoft.Extensions.Http.Polly
@@ -54,10 +56,8 @@ namespace SuperWorkerService
                 {
                     c.BaseAddress = new Uri("https://github.com/");
                     c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
                 }).AddTransientHttpErrorPolicy(x => x.WaitAndRetryAsync(3, _ => TimeSpan.FromSeconds(5)));
                 */
-
 
                 //
                 //Structured logging to Seq
@@ -67,8 +67,6 @@ namespace SuperWorkerService
                 /*
                 services.AddLogging(builder => builder.AddSeq());
                 */
-
-                services.AddHostedService<Worker>();
             });
     }
 }

@@ -2,8 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,73 +13,42 @@ namespace SuperWorkerService
         private readonly ILogger<Worker> log;
         private readonly IHostApplicationLifetime appLifetime;
         private readonly IConfiguration config;
+        private readonly ExtendedMethods exMethods;
 
-        public Worker(ILogger<Worker> logger, IHostApplicationLifetime applicationLifetime, IConfiguration configuration)
+        public Worker(ILogger<Worker> logger, IHostApplicationLifetime applicationLifetime, IConfiguration configuration, ExtendedMethods extendedMethods)
         {
             log = logger;
             this.appLifetime = applicationLifetime;
             this.config = configuration;
+            this.exMethods = extendedMethods;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            Stopwatch runtime = new Stopwatch();
+
             try
             {
                 while (!stoppingToken.IsCancellationRequested)
                 {
-                    if (!await ItIsTimeAsync().ConfigureAwait(false))
-                        continue;
+                    await exMethods.ItIsTimeAsync().ConfigureAwait(false);
+                    runtime.Restart();
 
-                    log.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-                    await Task.Delay(1000, stoppingToken);
+                    //Here you can add you code
+                    await Task.Delay(1000);
+
+                    runtime.Stop();
+                    log.LogInformation("Worker running at: {time} time of execution (s): {runetime}", DateTimeOffset.Now, runtime.Elapsed.TotalSeconds);
                 }
             }
             catch (Exception ex)
             {
-                log.LogCritical(ex, "Error in main worker at {timr}", DateTime.Now);
+                log.LogCritical(ex, "Error in main worker at {timr}", DateTimeOffset.Now);
             }
             finally
             {
                 appLifetime.StopApplication();
             }
-        }
-
-        private async Task<bool> ItIsTimeAsync()
-        {
-            int.TryParse(config["Schedule:ReapeteSec"], out int sec);
-
-            if (sec != 0)
-            {
-                await Task.Delay(TimeSpan.FromSeconds(sec)).ConfigureAwait(false);
-                return true;
-            }
-
-
-            var runAtTime = config.GetSection("Schedule:RunAtTime").Get<string[]>() ?? new string[0];
-
-            List<DateTime> listRunAtTime = new List<DateTime>();
-
-            foreach (var time in runAtTime)
-            {
-                DateTime.TryParse(time, out DateTime dateTime);
-                listRunAtTime.Add(dateTime);
-            }
-
-            var sortedListRunAtTime = listRunAtTime.OrderBy(e => e.Ticks).ToList<DateTime>();
-
-            //if (dateTime.Ticks != 0)
-            //{
-            //    TimeSpan elapsedSpan = new TimeSpan(dateTime.Ticks - DateTime.Now.Ticks);
-
-            //    if (elapsedSpan.Seconds <= 0)
-            //        elapsedSpan = elapsedSpan.Add(TimeSpan.FromDays(1));
-
-            //    log.LogDebug($"Next worker launch in {elapsedSpan.Hours}:{elapsedSpan.Minutes}:{elapsedSpan.Seconds}");
-
-            //    await Task.Delay(TimeSpan.FromSeconds(elapsedSpan.TotalSeconds)).ConfigureAwait(false);
-            //}
-
-            return true;
         }
     }
 
