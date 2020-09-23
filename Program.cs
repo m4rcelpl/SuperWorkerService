@@ -9,15 +9,13 @@ namespace SuperWorkerService
     public class Program
     {
         //If service is running in container, exit program on worker error
-        private static bool runningInContainer;
+        private static bool exitOnError;
 
         public static void Main(string[] args)
         {
-            //DOTNET_RUNNING_IN_CONTAINER is a standard environment variables set to true in all docker .NET images
-            runningInContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") switch
+            //If you run in docker you may want exit program on error to restart container
+            exitOnError = Environment.GetEnvironmentVariable("DOTNET_EXIT_ON_ERROR") switch
             {
-                "True" => true,
-                "TRUE" => true,
                 "true" => true,
                 _ => false
             };
@@ -25,7 +23,7 @@ namespace SuperWorkerService
             do
             {
                 CreateHostBuilder(args).Build().Run();
-            } while (!runningInContainer);
+            } while (exitOnError == false);
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
