@@ -1,8 +1,10 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using MySqlConnector;
+using Polly;
 using System;
+using System.Net.Http.Headers;
 
 namespace SuperWorkerService
 {
@@ -31,32 +33,36 @@ namespace SuperWorkerService
 
             //This add support for Ctrl+C to exit program
             .UseConsoleLifetime()
-            .ConfigureAppConfiguration((hostContext, configuration) =>
-            {
-                configuration.AddJsonFile("appsettings.json", false, true);
-            })
-            .ConfigureLogging((hostContext, loggin) =>
+            .ConfigureLogging(loggin =>
             {
                 loggin.ClearProviders();
-                loggin.AddConsole();
+                loggin.AddConsole(setting => setting.TimestampFormat = "[dd.MM.yyyy:hh:mm:ss.fff] ");
             })
             .ConfigureServices((hostContext, services) =>
             {
+                services.AddTransient(_ => new MySqlConnection(hostContext.Configuration["ConnectionStrings:Main"]));
                 services.AddSingleton<ExtendedMethods>();
                 services.AddTransient<Tasks>();
                 services.AddHostedService<Worker>();
+
 
                 //
                 //If you need HttpClient, uncomment this
                 //requirement - Microsoft.Extensions.Http.Polly
                 //
-                /*
-                services.AddHttpClient("RequestTracker", c =>
+
+                
+                services.AddHttpClient("main", c =>
                 {
-                    c.BaseAddress = new Uri("https://github.com/");
-                    c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                }).AddTransientHttpErrorPolicy(x => x.WaitAndRetryAsync(3, _ => TimeSpan.FromSeconds(5)));
-                */
+                    //c.BaseAddress = new Uri("https://SOME_WWW/");
+                    //c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                })
+                .AddTransientHttpErrorPolicy(x => x.WaitAndRetryAsync(10, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (exception, timeSpan, retryCount, context) =>
+                {
+                    // Add logic to be executed before each retry, such as logging
+                    //Debug.WriteLine($"{exception.Result} and count {retryCount}");
+                }));
+                
 
                 //
                 //Structured logging to Seq

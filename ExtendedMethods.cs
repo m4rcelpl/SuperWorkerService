@@ -44,11 +44,13 @@ namespace SuperWorkerService
                 listRunAtTime.Add(dateTime);
             }
 
-            var nextExecutionTime = listRunAtTime.OrderBy(e => e.Ticks).FirstOrDefault();
+            var nextExecutionTime = listRunAtTime.OrderBy(e => e.Ticks).ToArray();
 
-            log.LogInformation($"Next launch at {nextExecutionTime} (UTC)");
+            var ListOfTimes = string.Join(Environment.NewLine, nextExecutionTime.Select(p => p + " (UTC)"));
 
-            await Task.Delay(TimeSpan.FromTicks(nextExecutionTime.Ticks - DateTimeOffset.UtcNow.Ticks)).ConfigureAwait(false);
+            log.LogInformation($"Next launch at {Environment.NewLine}{ListOfTimes}");
+
+            await Task.Delay(TimeSpan.FromTicks(nextExecutionTime[0].Ticks - DateTimeOffset.UtcNow.Ticks)).ConfigureAwait(false);
 
             return;
         }

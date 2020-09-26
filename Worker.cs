@@ -34,18 +34,19 @@ namespace SuperWorkerService
                 while (!stoppingToken.IsCancellationRequested)
                 {
                     await exMethods.ItIsTimeAsync().ConfigureAwait(false);
-                    log.LogInformation("[{time}] Worker starts", DateTimeOffset.Now);
+
+                    log.LogDebug("Worker starts");
                     runtime.Restart();
 
-                    await tasks.Task1();
+                    await tasks.Task1().ConfigureAwait(false);
 
                     runtime.Stop();
-                    log.LogInformation("[{time}] Worker completed, time of execution (s): {runetime}", DateTimeOffset.Now, runtime.Elapsed.TotalSeconds);
+                    log.LogInformation("Worker completed, time of execution (s): {runetime}", runtime.Elapsed.TotalSeconds);
                 }
             }
             catch (Exception ex)
             {
-                log.LogCritical(ex, "[{time}] Error in main worker.", DateTimeOffset.Now);
+                log.LogCritical(ex, "Error in main worker.");
             }
             finally
             {
