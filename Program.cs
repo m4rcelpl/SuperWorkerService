@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using MySqlConnector;
 using Polly;
 using System;
-using System.Net.Http.Headers;
 
 namespace SuperWorkerService
 {
@@ -36,7 +35,13 @@ namespace SuperWorkerService
             .ConfigureLogging(loggin =>
             {
                 loggin.ClearProviders();
-                loggin.AddConsole(setting => setting.TimestampFormat = "[dd.MM.yyyy:hh:mm:ss.fff] ");
+                //loggin.AddJsonConsole(setting => setting.TimestampFormat = "dd.MM.yyyy:hh:mm:ss.fff");
+                loggin.AddSimpleConsole((setting) =>
+                {
+                    setting.TimestampFormat = "[dd.MM.yyyy:hh:mm:ss.fff] ";
+                    setting.SingleLine = true;
+                    setting.IncludeScopes = false;
+                });
             })
             .ConfigureServices((hostContext, services) =>
             {
@@ -45,13 +50,11 @@ namespace SuperWorkerService
                 services.AddTransient<Tasks>();
                 services.AddHostedService<Worker>();
 
-
                 //
                 //If you need HttpClient, uncomment this
                 //requirement - Microsoft.Extensions.Http.Polly
                 //
 
-                
                 services.AddHttpClient("main", c =>
                 {
                     //c.BaseAddress = new Uri("https://SOME_WWW/");
@@ -62,7 +65,6 @@ namespace SuperWorkerService
                     // Add logic to be executed before each retry, such as logging
                     //Debug.WriteLine($"{exception.Result} and count {retryCount}");
                 }));
-                
 
                 //
                 //Structured logging to Seq
