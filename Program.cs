@@ -35,10 +35,10 @@ namespace SuperWorkerService
             .ConfigureLogging(loggin =>
             {
                 loggin.ClearProviders();
-                //loggin.AddJsonConsole(setting => setting.TimestampFormat = "dd.MM.yyyy:hh:mm:ss.fff");
+                //loggin.AddJsonConsole(setting => setting.TimestampFormat = "dd.MM.yyyy:HH:mm:ss.fff");
                 loggin.AddSimpleConsole((setting) =>
                 {
-                    setting.TimestampFormat = "[dd.MM.yyyy:hh:mm:ss.fff] ";
+                    setting.TimestampFormat = "[dd.MM.yyyy:HH:mm:ss.fff] ";
                     setting.SingleLine = true;
                     setting.IncludeScopes = false;
                 });
